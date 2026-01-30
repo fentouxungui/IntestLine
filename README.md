@@ -1,3 +1,6 @@
+> 注意： 这是一个经Claude code做了代码优化后的fork，测试了一个数据，感觉没有问题；
+> 此外，支持Xenium outputs，需要使用prepare-CODEX-csv-from-Xenium-outputs/extract-coordinates-and-features-expression-from-Xenium.ipynb 代码准备输入文件，Spatial_Perturb_SI_2是我从[Tissue-resident memory CD8 T cell diversity is spatiotemporally imprinted])这篇文章下载的一个演示数据，xenium_cell_expression_coordinates.zip解压后可直接用于测试这个工具，selected_backbone-28-1月-2026_14h53min.csv是我绘制的一个粗糙backbone，你可以自行绘制，Spatial_Perturb_SI_2\results下是我使用此数据得到的一些结果以及截图。
+
 <img src="IntestLine-Logo.png" align="right" width=120 height=139 alt="" />
 
 # IntestLine 
@@ -61,4 +64,5 @@ Step 4: Overlay parameters on the linear structure\
 
 # Cite us
 Yuzeir, A.; Bejaran, D.; Grein, S.; Hasenauer, J.; Schlitzer, A.; Yu, J. IntestLine: A Shiny-Based Application to Map the Rolled Intestinal Tissue onto a Line; Bioinformatics, Volume 39, Issue 4, April 2023, btad140, https://doi.org/10.1093/bioinformatics/btad140.
+
 
