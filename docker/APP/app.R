@@ -11,7 +11,7 @@ library(ggtext)
 library(data.table)
 library(readr)
 
-source(file = "functions.R")
+source(file = "functions_optimized.R")
 
 ####
 # initialize global variable to record selected (clicked) rows
@@ -854,66 +854,82 @@ server = shinyServer(function(input, output, session) {
       })
       ### plot linear structure ----
       output$line_plot <- renderPlot({
-        ### 
+        ###
         plot_linear <- subset(linear_image_clean, nn_dist <= input$selectDistance &
                                 zscore <= input$selectZscore)
-        plot(
-          plot_linear$shortest_path_length,
-          plot_linear$nn_dist,
-          cex = input$pointSize/100,
-          pch = 16,
-          col = "black",
-          ylab = "Thickness (Serosa-luminal axis)",
-          xlab = "Length (Proximal/outer-distal/inner axis)",
-          main = "Linear structure of input image"
-        )
+
+        # Check if data is empty after filtering
+        if (nrow(plot_linear) == 0) {
+          plot.new()
+          text(0.5, 0.5, "No cells pass the filter criteria.\nPlease adjust distance or z-score thresholds.",
+               cex = 1.2, col = "red")
+        } else {
+          plot(
+            plot_linear$shortest_path_length,
+            plot_linear$nn_dist,
+            cex = input$pointSize/100,
+            pch = 16,
+            col = "black",
+            ylab = "Thickness (Serosa-luminal axis)",
+            xlab = "Length (Proximal/outer-distal/inner axis)",
+            main = "Linear structure of input image"
+          )
+        }
       })
       ## Overlay markers ----
       observeEvent(input$overlayData,{
       output$marker_plot <- renderPlot({
-        ### 
+        ###
         plot_linear <- subset(linear_image_clean, nn_dist <= input$selectDistance &
                                 zscore <= input$selectZscore )
-        marker_overlay = merge(plot_linear, input_image, by = "pos",
-                               no.dups = T, suffixes = c("","1"))
-        
-        selected_marker = input$selectMarker
-        marker_overlay = marker_overlay[,c("x","y","z","pos","shortest_path_length","nn_dist",selected_marker)]
-        marker_overlay[, selected_marker] = scale_marker(marker_overlay[, selected_marker])
-        ## overlay large values on top
-        marker_overlay = marker_overlay[order(marker_overlay[, selected_marker],decreasing = FALSE),]
-        min_scale = min(marker_overlay[, selected_marker])
-        median_scale = median(marker_overlay[, selected_marker])
-        max_scale = max(marker_overlay[, selected_marker])
-        ggplot(NULL) +
-          geom_point(data = marker_overlay, aes(
-            x = shortest_path_length,
-            y = nn_dist,
-            color = eval(parse(text = selected_marker))),
-            size = input$pointSize/100*3
-          ) +
-          labs(color = selected_marker) +
-          
-          scale_colour_gradientn(colors = c("#e6e6e6",
-                                            "#e60000",
-                                            "#e60000",
-                                            "#e60000", 
-                                            "#e60000"),
-                                 breaks = c(0,
-                                            0.5,
-                                            1)
-          ) +
-          ylab("Thickness (Serosa-luminal axis)") + 
-          xlab("Length (Proximal/outer-distal/inner axis)") +
-          labs(title = paste0("Digitally unrolled for ", selected_marker," marker")) +
-          theme(plot.title = element_text(hjust = 0.5)) +
-          theme(
-            axis.line = element_line(color = 'black'),
-            panel.background = element_rect(fill = 'white', color = 'black'),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.border = element_blank()
-          )
+
+        # Check if data is empty after filtering
+        if (nrow(plot_linear) == 0) {
+          plot.new()
+          text(0.5, 0.5, "No cells pass the filter criteria.\nPlease adjust distance or z-score thresholds.",
+               cex = 1.2, col = "red")
+        } else {
+          marker_overlay = merge(plot_linear, input_image, by = "pos",
+                                 no.dups = T, suffixes = c("","1"))
+
+          selected_marker = input$selectMarker
+          marker_overlay = marker_overlay[,c("x","y","z","pos","shortest_path_length","nn_dist",selected_marker)]
+          marker_overlay[, selected_marker] = scale_marker(marker_overlay[, selected_marker])
+          ## overlay large values on top
+          marker_overlay = marker_overlay[order(marker_overlay[, selected_marker],decreasing = FALSE),]
+          min_scale = min(marker_overlay[, selected_marker])
+          median_scale = median(marker_overlay[, selected_marker])
+          max_scale = max(marker_overlay[, selected_marker])
+          ggplot(NULL) +
+            geom_point(data = marker_overlay, aes(
+              x = shortest_path_length,
+              y = nn_dist,
+              color = eval(parse(text = selected_marker))),
+              size = input$pointSize/100*3
+            ) +
+            labs(color = selected_marker) +
+
+            scale_colour_gradientn(colors = c("#e6e6e6",
+                                              "#e60000",
+                                              "#e60000",
+                                              "#e60000",
+                                              "#e60000"),
+                                   breaks = c(0,
+                                              0.5,
+                                              1)
+            ) +
+            ylab("Thickness (Serosa-luminal axis)") +
+            xlab("Length (Proximal/outer-distal/inner axis)") +
+            labs(title = paste0("Digitally unrolled for ", selected_marker," marker")) +
+            theme(plot.title = element_text(hjust = 0.5)) +
+            theme(
+              axis.line = element_line(color = 'black'),
+              panel.background = element_rect(fill = 'white', color = 'black'),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank()
+            )
+        }
       })
       })
       output$downloadStretch <- downloadHandler(
